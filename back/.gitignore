@@ -1,0 +1,7 @@
+node_modules/
+web/node_modules/
+web/.next/
+web/.env.local
+.env
+*.log
+.DS_Store

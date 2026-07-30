@@ -3,15 +3,16 @@ on:
   push:
 
 jobs:
-  hello-job
-    runs-on:ubuntu-latest
+  hello-job:
+    runs-on: ubuntu-latest
 
-  steps:
-    - uses: actions/checkout@v3
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
     
-    -name: Hello World
-    run: echo "Hello, World!"
+      - name: Hello World
+        run: echo "Hello, World!"
 
-    - name: Show Files
+      - name: Show Files
         run: ls -la
     

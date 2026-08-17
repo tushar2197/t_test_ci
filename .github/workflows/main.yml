@@ -1,6 +1,11 @@
 name: My First Workflow
 on:
   push:
+    branches:
+      - master
+
+env:
+  APP_NAME: "This is a global variable"
 
 jobs:
   hello-job:
@@ -14,5 +19,5 @@ jobs:
         run: echo "Hello, World!"
 
       - name: Show Files
-        run: ls -la
+        run: echo $APP_NAME
     

@@ -8,25 +8,42 @@ env:
   APP_NAME: "This is a global variable"
 
 jobs:
-  hello-job:
+ test:
     runs-on: ubuntu-latest
-    env:
-      JOB_NAME: "Job Variable"
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-    
-      - name: Show Context
-        run: |
-          echo "Repository: ${{ github.repository }}"
-          echo "Branch: ${{ github.ref }}"
-          echo "Event: ${{ github.event_name }}"
 
-      - name: Master Branch
-        if: github.ref == 'refs/heads/master'
-        run: echo "Running on MASTER"
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      
+      - name: Install Frontend dependencies
+        working-directory: ./web
+        run: npm ci
 
-      - name: Develop Branch
-        if: github.ref == 'refs/heads/develop'
-        run: echo "Running on DEVELOP"
+      - name: Install Backend dependencies
+        working-directory: ./back
+        run: npm ci
+
+      - name: lint
+        run: npm run lint
+      
+      - name: Front Test
+        working-directory: ./web
+        run: npm test
+
+      - name: Back Test
+        working-directory: ./back
+        run: npm test
+      
+      - name: Lint
+        run: npm run lint
+
+      - name: Backend Smoke Test
+        run: npm run smoke
+      
+        
+      

@@ -11,7 +11,10 @@
     "dev:api": "node --watch src/server.js",
     "dev:web": "npm --prefix web run dev",
     "build:web": "npm --prefix web run build",
-    "smoke": "node scripts/smoke-test.js"
+    "smoke": "node scripts/smoke-test.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint src/ --max-warnings 0"
   },
   "engines": {
     "node": ">=18"
@@ -22,5 +25,12 @@
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7",
+    "@babel/preset-env": "^7",
+    "babel-jest": "^29",
+    "eslint": "^9",
+    "jest": "^29"
   }
 }

@@ -37,7 +37,7 @@ export function verifyPassword(user, password) {
 }
 
 export function toPublicUser(user) {
-  const { passwordHash, ...publicUser } = user;
+  const {  ...publicUser } = user;
   return publicUser;
 }
 

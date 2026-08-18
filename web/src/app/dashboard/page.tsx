@@ -17,7 +17,10 @@ import styles from "../styles.module.css";
 
 type ProfileData = {
   user: User;
-  preferences: { theme: string; region: string };
+  preferences: {
+    theme: string;
+    region: string;
+  };
 };
 
 export default function DashboardPage() {
@@ -34,54 +37,80 @@ export default function DashboardPage() {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const userRole = user?.role;
+
+  /*
+   * Redirect unauthenticated users.
+   */
   useEffect(() => {
     if (ready && !user) {
       router.replace("/login");
     }
   }, [ready, user, router]);
 
+  /*
+   * Load public API data.
+   *
+   * This function is also used by the Refresh button.
+   */
   const loadPublic = useCallback(async () => {
     try {
       const result = await fetchHealth();
+
       setHealth(`${result.status} · uptime ${result.uptimeSeconds}s`);
       setHealthError(null);
     } catch (err) {
       setHealth(null);
-      setHealthError(err instanceof ApiError ? err.message : "Health check failed");
+      setHealthError(
+        err instanceof ApiError ? err.message : "Health check failed"
+      );
     }
 
     try {
       const result = await fetchProducts();
+
       setProducts(result.items);
     } catch {
       setProducts([]);
     }
   }, []);
 
+  /*
+   * Load protected API data.
+   *
+   * This function is also used by the Reload Protected button.
+   */
   const loadProtected = useCallback(async () => {
     if (!token) return;
+
     setBusy(true);
     setActionMessage(null);
+
     try {
       const [profileResult, ordersResult] = await Promise.all([
         fetchProfile(token),
         fetchOrders(token),
       ]);
+
       setProfile(profileResult);
       setOrders(ordersResult.orders);
 
-      if (user?.role === "admin") {
+      if (userRole === "admin") {
         try {
           const admins = await fetchAdminUsers(token);
+
           setAdminUsers(admins.users);
           setAdminError(null);
         } catch (err) {
           setAdminUsers(null);
-          setAdminError(err instanceof ApiError ? err.message : "Admin call failed");
+          setAdminError(
+            err instanceof ApiError ? err.message : "Admin call failed"
+          );
         }
       } else {
         setAdminUsers(null);
         setAdminError(null);
+
         try {
           await fetchAdminUsers(token);
         } catch (err) {
@@ -93,41 +122,164 @@ export default function DashboardPage() {
         }
       }
     } catch (err) {
-      setActionMessage(err instanceof ApiError ? err.message : "Protected calls failed");
+      setActionMessage(
+        err instanceof ApiError ? err.message : "Protected calls failed"
+      );
     } finally {
       setBusy(false);
     }
-  }, [token, user?.role]);
+  }, [token, userRole]);
 
+  /*
+   * Initial dashboard loading.
+   *
+   * The API requests are started inside the effect and state is
+   * updated after the asynchronous requests complete.
+   */
   useEffect(() => {
     if (!ready || !user || !token) return;
-    void loadPublic();
-    void loadProtected();
-  }, [ready, user, token, loadPublic, loadProtected]);
 
+    let cancelled = false;
+
+    const loadDashboard = async () => {
+      setBusy(true);
+      setActionMessage(null);
+
+      try {
+        const [
+          healthResult,
+          productsResult,
+          profileResult,
+          ordersResult,
+        ] = await Promise.all([
+          fetchHealth(),
+          fetchProducts(),
+          fetchProfile(token),
+          fetchOrders(token),
+        ]);
+
+        if (cancelled) return;
+
+        setHealth(
+          `${healthResult.status} · uptime ${healthResult.uptimeSeconds}s`
+        );
+        setHealthError(null);
+
+        setProducts(productsResult.items);
+
+        setProfile(profileResult);
+
+        setOrders(ordersResult.orders);
+
+        if (user.role === "admin") {
+          try {
+            const admins = await fetchAdminUsers(token);
+
+            if (cancelled) return;
+
+            setAdminUsers(admins.users);
+            setAdminError(null);
+          } catch (err) {
+            if (cancelled) return;
+
+            setAdminUsers(null);
+            setAdminError(
+              err instanceof ApiError
+                ? err.message
+                : "Admin call failed"
+            );
+          }
+        } else {
+          setAdminUsers(null);
+          setAdminError(null);
+
+          try {
+            await fetchAdminUsers(token);
+          } catch (err) {
+            if (cancelled) return;
+
+            if (err instanceof ApiError && err.status === 403) {
+              setAdminError(
+                "403 forbidden — expected for the user role."
+              );
+            } else if (err instanceof ApiError) {
+              setAdminError(err.message);
+            }
+          }
+        }
+      } catch (err) {
+        if (cancelled) return;
+
+        setActionMessage(
+          err instanceof ApiError
+            ? err.message
+            : "Protected calls failed"
+        );
+      } finally {
+        if (!cancelled) {
+          setBusy(false);
+        }
+      }
+    };
+
+    void loadDashboard();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, user, token]);
+
+  /*
+   * Create order.
+   */
   async function onCreateOrder() {
     if (!token || products.length === 0) return;
+
     setBusy(true);
     setActionMessage(null);
+
     try {
-      const result = await createOrder(token, products[0].id, 1);
-      setActionMessage(`Created order ${result.order.id} (${result.order.status}).`);
+      const result = await createOrder(
+        token,
+        products[0].id,
+        1
+      );
+
+      setActionMessage(
+        `Created order ${result.order.id} (${result.order.status}).`
+      );
+
       const refreshed = await fetchOrders(token);
+
       setOrders(refreshed.orders);
     } catch (err) {
-      setActionMessage(err instanceof ApiError ? err.message : "Could not create order");
+      setActionMessage(
+        err instanceof ApiError
+          ? err.message
+          : "Could not create order"
+      );
     } finally {
       setBusy(false);
     }
   }
 
+  /*
+   * Logout.
+   */
   async function onLogout() {
     await logout();
     router.replace("/login");
   }
 
+  /*
+   * Authentication loading state.
+   */
   if (!ready || !user || !token) {
-    return <div className={styles.loading}>Loading session…</div>;
+    return (
+      <div className={styles.loading}>
+        Loading session…
+      </div>
+    );
   }
 
   return (
@@ -136,9 +288,16 @@ export default function DashboardPage() {
         <div className={styles.brand}>
           Sig<span>nal</span>
         </div>
+
         <div className={styles.topbarMeta}>
-          <span className={styles.pill}>{user.email}</span>
-          <span className={styles.pill}>{user.role}</span>
+          <span className={styles.pill}>
+            {user.email}
+          </span>
+
+          <span className={styles.pill}>
+            {user.role}
+          </span>
+
           <button
             type="button"
             className={`${styles.btn} ${styles.btnGhost} ${styles.btnSmall}`}
@@ -152,15 +311,26 @@ export default function DashboardPage() {
       <main className={styles.dashboard}>
         <div className={styles.dashboardHeader}>
           <h1>Hello, {user.name}</h1>
+
           <p>
-            Talking to <span className={styles.mono}>{getApiBaseUrl()}</span>
+            Talking to{" "}
+            <span className={styles.mono}>
+              {getApiBaseUrl()}
+            </span>
           </p>
         </div>
 
         <div className={styles.grid}>
-          <section className={`${styles.panel} ${styles.half}`}>
+          {/* Public Health */}
+          <section
+            className={`${styles.panel} ${styles.half}`}
+          >
             <h2>Public health</h2>
-            <p className={styles.sub}>GET /api/public/health — no token</p>
+
+            <p className={styles.sub}>
+              GET /api/public/health — no token
+            </p>
+
             <div className={styles.row}>
               <button
                 type="button"
@@ -170,85 +340,96 @@ export default function DashboardPage() {
                 Refresh
               </button>
             </div>
+
             {health ? (
-              <p className={styles.statusOk}>{health}</p>
+              <p className={styles.statusOk}>
+                {health}
+              </p>
             ) : (
-              <p className={styles.statusBad}>{healthError ?? "No response yet"}</p>
+              <p className={styles.statusBad}>
+                {healthError ?? "No response yet"}
+              </p>
             )}
           </section>
 
-          <section className={`${styles.panel} ${styles.half}`}>
+          {/* Profile */}
+          <section
+            className={`${styles.panel} ${styles.half}`}
+          >
             <h2>Profile</h2>
-            <p className={styles.sub}>GET /api/protected/profile</p>
+
+            <p className={styles.sub}>
+              GET /api/protected/profile
+            </p>
+
             {profile ? (
               <div className={styles.list}>
                 <div className={styles.listItem}>
-                  <strong>{profile.user.name}</strong>
-                  <span className={styles.muted}>{profile.user.role}</span>
+                  <strong>
+                    {profile.user.name}
+                  </strong>
+
+                  <span className={styles.muted}>
+                    {profile.user.role}
+                  </span>
                 </div>
+
                 <div className={styles.listItem}>
-                  <span className={styles.muted}>Theme</span>
-                  <span className={styles.mono}>{profile.preferences.theme}</span>
+                  <span className={styles.muted}>
+                    Theme
+                  </span>
+
+                  <span className={styles.mono}>
+                    {profile.preferences.theme}
+                  </span>
                 </div>
+
                 <div className={styles.listItem}>
-                  <span className={styles.muted}>Region</span>
-                  <span className={styles.mono}>{profile.preferences.region}</span>
+                  <span className={styles.muted}>
+                    Region
+                  </span>
+
+                  <span className={styles.mono}>
+                    {profile.preferences.region}
+                  </span>
                 </div>
               </div>
             ) : (
-              <p className={styles.empty}>{busy ? "Loading…" : "No profile loaded"}</p>
+              <p className={styles.empty}>
+                {busy
+                  ? "Loading…"
+                  : "No profile loaded"}
+              </p>
             )}
           </section>
 
-          <section className={`${styles.panel} ${styles.half}`}>
+          {/* Products */}
+          <section
+            className={`${styles.panel} ${styles.half}`}
+          >
             <h2>Products</h2>
-            <p className={styles.sub}>GET /api/public/products</p>
+
+            <p className={styles.sub}>
+              GET /api/public/products
+            </p>
+
             <div className={styles.list}>
               {products.length === 0 ? (
-                <p className={styles.empty}>No products</p>
+                <p className={styles.empty}>
+                  No products
+                </p>
               ) : (
                 products.map((product) => (
-                  <div className={styles.listItem} key={product.id}>
-                    <strong>{product.name}</strong>
-                    <span className={styles.mono}>${product.price}</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </section>
+                  <div
+                    className={styles.listItem}
+                    key={product.id}
+                  >
+                    <strong>
+                      {product.name}
+                    </strong>
 
-          <section className={`${styles.panel} ${styles.half}`}>
-            <h2>Orders</h2>
-            <p className={styles.sub}>GET/POST /api/protected/orders</p>
-            <div className={styles.row}>
-              <button
-                type="button"
-                className={`${styles.btn} ${styles.btnSmall}`}
-                disabled={busy || products.length === 0}
-                onClick={() => void onCreateOrder()}
-              >
-                Create order
-              </button>
-              <button
-                type="button"
-                className={`${styles.btn} ${styles.btnGhost} ${styles.btnSmall}`}
-                disabled={busy}
-                onClick={() => void loadProtected()}
-              >
-                Reload protected
-              </button>
-            </div>
-            {actionMessage ? <p className={styles.muted}>{actionMessage}</p> : null}
-            <div className={styles.list}>
-              {orders.length === 0 ? (
-                <p className={styles.empty}>No orders</p>
-              ) : (
-                orders.map((order) => (
-                  <div className={styles.listItem} key={order.id}>
-                    <strong className={styles.mono}>{order.id}</strong>
-                    <span className={styles.muted}>
-                      {order.status}
-                      {typeof order.total === "number" ? ` · $${order.total}` : ""}
+                    <span className={styles.mono}>
+                      ${product.price}
                     </span>
                   </div>
                 ))
@@ -256,24 +437,128 @@ export default function DashboardPage() {
             </div>
           </section>
 
+          {/* Orders */}
+          <section
+            className={`${styles.panel} ${styles.half}`}
+          >
+            <h2>Orders</h2>
+
+            <p className={styles.sub}>
+              GET/POST /api/protected/orders
+            </p>
+
+            <div className={styles.row}>
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnSmall}`}
+                disabled={
+                  busy ||
+                  products.length === 0
+                }
+                onClick={() =>
+                  void onCreateOrder()
+                }
+              >
+                Create order
+              </button>
+
+              <button
+                type="button"
+                className={`${styles.btn} ${styles.btnGhost} ${styles.btnSmall}`}
+                disabled={busy}
+                onClick={() =>
+                  void loadProtected()
+                }
+              >
+                Reload protected
+              </button>
+            </div>
+
+            {actionMessage ? (
+              <p className={styles.muted}>
+                {actionMessage}
+              </p>
+            ) : null}
+
+            <div className={styles.list}>
+              {orders.length === 0 ? (
+                <p className={styles.empty}>
+                  No orders
+                </p>
+              ) : (
+                orders.map((order) => (
+                  <div
+                    className={styles.listItem}
+                    key={order.id}
+                  >
+                    <strong
+                      className={styles.mono}
+                    >
+                      {order.id}
+                    </strong>
+
+                    <span
+                      className={styles.muted}
+                    >
+                      {order.status}
+
+                      {typeof order.total ===
+                      "number"
+                        ? ` · $${order.total}`
+                        : ""}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+
+          {/* Admin Users */}
           <section className={styles.panel}>
             <h2>Admin users</h2>
-            <p className={styles.sub}>GET /api/protected/admin/users — admin only</p>
+
+            <p className={styles.sub}>
+              GET /api/protected/admin/users —
+              admin only
+            </p>
+
             {adminUsers ? (
               <div className={styles.list}>
                 {adminUsers.map((entry) => (
-                  <div className={styles.listItem} key={entry.id}>
+                  <div
+                    className={styles.listItem}
+                    key={entry.id}
+                  >
                     <div>
-                      <strong>{entry.name}</strong>
-                      <div className={styles.muted}>{entry.email}</div>
+                      <strong>
+                        {entry.name}
+                      </strong>
+
+                      <div
+                        className={styles.muted}
+                      >
+                        {entry.email}
+                      </div>
                     </div>
-                    <span className={styles.pill}>{entry.role}</span>
+
+                    <span
+                      className={styles.pill}
+                    >
+                      {entry.role}
+                    </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className={adminError ? styles.statusBad : styles.empty}>
-                {adminError ?? "No admin payload"}
+              <p
+                className={
+                  adminError
+                    ? styles.statusBad
+                    : styles.empty
+                }
+              >
+                {adminError ??
+                  "No admin payload"}
               </p>
             )}
           </section>

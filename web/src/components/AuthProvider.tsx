@@ -59,28 +59,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const storedToken = getStoredToken();
-    const storedUser = getStoredUser();
+    const initializeAuth = async () => {
+      const storedToken = getStoredToken();
+      const storedUser = getStoredUser();
 
-    if (!storedToken) {
-      setReady(true);
-      return;
-    }
+      if (!storedToken) {
+        return;
+      }
 
-    setToken(storedToken);
-    setUser(storedUser);
+      setToken(storedToken);
+      setUser(storedUser);
 
-    fetchMe(storedToken)
-      .then((me) => {
+      try {
+        const me = await fetchMe(storedToken);
         setUser(me.user);
         persistSession(storedToken, me.user);
-      })
-      .catch(() => {
+      } catch {
         clearSession();
         setUser(null);
         setToken(null);
-      })
-      .finally(() => setReady(true));
+      }
+    };
+
+    initializeAuth().finally(() => {
+      setReady(true);
+    });
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {

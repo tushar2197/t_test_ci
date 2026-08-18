@@ -35,7 +35,7 @@ export function createApp() {
     res.status(404).json({ error: "not_found", message: `No route for ${req.method} ${req.originalUrl}.` });
   });
 
-  app.use((err, req, res, next) => {
+  app.use((err, req, res) => {
     console.error("[error]", err);
     res.status(err.status ?? 500).json({
       error: "internal_error",

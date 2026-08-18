@@ -1,3 +1,4 @@
+import React from 'react'
 import type { Metadata } from "next";
 import { DM_Sans, IBM_Plex_Mono, Syne } from "next/font/google";
 import { AuthProvider } from "@/components/AuthProvider";

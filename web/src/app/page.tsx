@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import React,{ useEffect } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { getApiBaseUrl } from "@/lib/api";
 import styles from "./styles.module.css";

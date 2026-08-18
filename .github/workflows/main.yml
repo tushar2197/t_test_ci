@@ -27,22 +27,29 @@ jobs:
       - name: Install Backend dependencies
         working-directory: ./back
         run: npm ci
-
-      - name: lint
-        run: npm run lint
       
+      - name: Front Lint
+        working-directory: ./web
+        run: npm run lint
+
       - name: Front Test
+        if: success()
         working-directory: ./web
         run: npm test
-
-      - name: Back Test
-        working-directory: ./back
-        run: npm test
       
-      - name: Lint
+      - name: Back Lint
+        working-directory: ./back
         run: npm run lint
 
+      - name: Back Test
+        if: success()
+        working-directory: ./back
+        run: npm test
+
+
       - name: Backend Smoke Test
+        if: success()
+        working-directory: ./back
         run: npm run smoke
       
         

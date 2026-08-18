@@ -1,14 +1,16 @@
-name: My First Workflow
+name: CI
+
 on:
   push:
     branches:
       - master
 
-env:
-  APP_NAME: "This is a global variable"
+  pull_request:
+    branches:
+      - master
 
 jobs:
- test:
+  frontend:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,38 +21,50 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-      
-      - name: Install Frontend dependencies
+
+      - name: Frontend CI
         working-directory: ./web
-        run: npm ci
+        run: |
+          npm ci
+          npm run lint
+          npm test
+    
+  backend:
+    runs-on: ubuntu-latest
 
-      - name: Install Backend dependencies
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Frontend CI
         working-directory: ./back
-        run: npm ci
-      
-      - name: Front Lint
-        working-directory: ./web
-        run: npm run lint
+        run: |
+          npm ci
+          npm run lint
+          npm test
+  
+  build:
+    needs:
+      - frontend
+      - backend
+    runs-on: ubuntu-latest
 
-      - name: Front Test
-        if: success()
-        working-directory: ./web
-        run: npm test
-      
-      - name: Back Lint
-        working-directory: ./back
-        run: npm run lint
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Back Test
-        if: success()
-        working-directory: ./back
-        run: npm test
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 24
 
-
-      - name: Backend Smoke Test
-        if: success()
-        working-directory: ./back
-        run: npm run smoke
-      
-        
-      
+    - name: Build Frontend
+      working-directory: ./web
+      run: |
+        npm ci
+        npm run build

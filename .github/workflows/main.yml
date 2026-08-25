@@ -28,6 +28,13 @@ jobs:
           npm ci
           npm run lint
           npm test
+          npm run build
+
+      - name: Upload Frontend Build
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: ./web/dist
     
   backend:
     runs-on: ubuntu-latest
@@ -41,7 +48,7 @@ jobs:
         with:
           node-version: 24
 
-      - name: Frontend CI
+      - name: Backend CI
         working-directory: ./back
         run: |
           npm ci
@@ -55,16 +62,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Download Frontend Build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: ./web/dist
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 24
-
-    - name: Build Frontend
-      working-directory: ./web
-      run: |
-        npm ci
-        npm run build
+      - name: Show Frontend Build
+        run: ls -la ./web/dist

@@ -35,6 +35,7 @@ jobs:
         with:
           name: frontend-build
           path: ./web/.next
+          include-hidden-files: true
     
   backend:
     runs-on: ubuntu-latest

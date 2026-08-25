@@ -21,6 +21,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
 
       - name: Frontend CI
         working-directory: ./web
@@ -48,6 +50,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
+          cache: npm
+          cache-dependency-path: back/package-lock.json
 
       - name: Backend CI
         working-directory: ./back

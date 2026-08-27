@@ -40,68 +40,51 @@ jobs:
           include-hidden-files: true
     
   backend:
-    runs-on: ubuntu-latest
-    env:
-      JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
-      PORT: ${{ vars.APP_NAME }}
+  runs-on: ubuntu-latest
+  environment: dev
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  env:
+    JWT_SECRET: ${{ secrets.JWT_SECRET }}
+    JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
+    PORT: ${{ vars.PORT }}
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: back/package-lock.json
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Backend CI
-        working-directory: ./back
-        run: |
-          npm ci
-          npm run lint
-          npm test
-      
-      - name: Check environment variables
-        run: |
-          if [ -n "$JWT_SECRET" ]; then
-            echo "JWT_SECRET is set"
-          else
-            echo "JWT_SECRET is NOT set"
-            exit 1
-          fi
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 24
+        cache: npm
+        cache-dependency-path: back/package-lock.json
 
-          if [ -n "$JWT_EXPIRES_IN" ]; then
-            echo "JWT_EXPIRES_IN is set"
-          else
-            echo "JWT_EXPIRES_IN is NOT set"
-            exit 1
-          fi
+    - name: Backend CI
+      working-directory: ./back
+      run: |
+        npm ci
+        npm run lint
+        npm test
 
-          if [ -n "$PORT" ]; then
-            echo "PORT is set"
-          else
-            echo "PORT is NOT set"
-            exit 1
-          fi
-          
-  
-  build:
-    needs:
-      - frontend
-      - backend
-    runs-on: ubuntu-latest
+    - name: Check environment variables
+      run: |
+        if [ -n "$JWT_SECRET" ]; then
+          echo "JWT_SECRET is set"
+        else
+          echo "JWT_SECRET is NOT set"
+          exit 1
+        fi
 
-    steps:
-      - name: Download Frontend Build
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-build
-          path: ./web/.next
+        if [ -n "$JWT_EXPIRES_IN" ]; then
+          echo "JWT_EXPIRES_IN is set"
+        else
+          echo "JWT_EXPIRES_IN is NOT set"
+          exit 1
+        fi
 
-      - name: Show Frontend Build
-        run: ls -la ./web/.next
-
-  
+        if [ -n "$PORT" ]; then
+          echo "PORT is set"
+        else
+          echo "PORT is NOT set"
+          exit 1
+        fi

@@ -40,52 +40,52 @@ jobs:
           include-hidden-files: true
     
   backend:
-  runs-on: ubuntu-latest
-  environment: dev
+    runs-on: ubuntu-latest
+    environment: dev
 
 
-  env:
-    JWT_SECRET: ${{ secrets.JWT_SECRET }}
-    JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
-    PORT: ${{ vars.PORT }}
+    env:
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
+      PORT: ${{ vars.PORT }}
 
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 24
-        cache: npm
-        cache-dependency-path: back/package-lock.json
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: back/package-lock.json
 
-    - name: Backend CI
-      working-directory: ./back
-      run: |
-        npm ci
-        npm run lint
-        npm test
+      - name: Backend CI
+        working-directory: ./back
+        run: |
+          npm ci
+          npm run lint
+          npm test
 
-    - name: Check environment variables
-      run: |
-        if [ -n "$JWT_SECRET" ]; then
-          echo "JWT_SECRET is set"
-        else
-          echo "JWT_SECRET is NOT set"
-          exit 1
-        fi
+      - name: Check environment variables
+        run: |
+          if [ -n "$JWT_SECRET" ]; then
+            echo "JWT_SECRET is set"
+          else
+            echo "JWT_SECRET is NOT set"
+            exit 1
+          fi
 
-        if [ -n "$JWT_EXPIRES_IN" ]; then
-          echo "JWT_EXPIRES_IN is set"
-        else
-          echo "JWT_EXPIRES_IN is NOT set"
-          exit 1
-        fi
+          if [ -n "$JWT_EXPIRES_IN" ]; then
+            echo "JWT_EXPIRES_IN is set"
+          else
+            echo "JWT_EXPIRES_IN is NOT set"
+            exit 1
+          fi
 
-        if [ -n "$PORT" ]; then
-          echo "PORT is set"
-        else
-          echo "PORT is NOT set"
-          exit 1
-        fi
+          if [ -n "$PORT" ]; then
+            echo "PORT is set"
+          else
+            echo "PORT is NOT set"
+            exit 1
+          fi

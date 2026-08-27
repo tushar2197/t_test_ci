@@ -44,7 +44,7 @@ jobs:
     env:
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
-      PORT: ${{ secrets.PORT }}
+      PORT: ${{ vars.PORT }}
 
     steps:
       - name: Checkout code

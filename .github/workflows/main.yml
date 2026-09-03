@@ -104,3 +104,19 @@ jobs:
       - name: Test SSH Connection
         run: |
           ssh "$SERVER_USER@$SERVER_HOST" "echo SSH connection successful"
+
+      - name: Check Server Environment
+        run: |
+          ssh "$SERVER_USER@$SERVER_HOST" "
+            echo '--- Server ---'
+            hostname
+
+            echo '--- Node ---'
+            node --version
+
+            echo '--- NPM ---'
+            npm --version
+
+            echo '--- PM2 ---'
+            pm2 --version
+          "

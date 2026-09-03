@@ -94,42 +94,13 @@ jobs:
           name: frontend-build
           path: ./web/.next
 
-      - name: Show Frontend Build
-        run: ls -la ./web/.next
-
-      - name: Check Deployment Configuration
+      - name: Setup SSH
         run: |
-          if [ -n "$SERVER_HOST" ]; then
-            echo "SERVER_HOST is set"
-          else
-            echo "SERVER_HOST is NOT set"
-            exit 1
-          fi
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H "$SERVER_HOST" >> ~/.ssh/known_hosts
 
-          if [ -n "$SERVER_USER" ]; then
-            echo "SERVER_USER is set"
-          else
-            echo "SERVER_USER is NOT set"
-            exit 1
-          fi
-
-          if [ -n "$APP_NAME" ]; then
-            echo "APP_NAME is set"
-          else
-            echo "APP_NAME is NOT set"
-            exit 1
-          fi
-
-      - name: Deployment Check
-        run: echo "Frontend and Backend passed. Ready to deploy."
-      - name: Download Frontend Build
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-build
-          path: ./web/.next
-
-      - name: Show Frontend Build
-        run: ls -la ./web/.next
-
-      - name: Deployment Check
-        run: echo "Frontend and Backend passed. Ready to deploy."
+      - name: Test SSH Connection
+        run: |
+          ssh "$SERVER_USER@$SERVER_HOST" "echo SSH connection successful"

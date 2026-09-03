@@ -43,13 +43,22 @@ jobs:
     runs-on: ubuntu-latest
     environment: dev
 
-
     env:
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
       PORT: ${{ vars.PORT }}
 
     steps:
+      - name: Check Event Type
+        run: echo "Event is ${{ github.event_name }}"
+
+      - name: Push Only
+        if: github.event_name == 'push'
+        run: echo "This is a push to master"
+
+      - name: Pull Request Only
+        if: github.event_name == 'pull_request'
+        run: echo "This is a Pull Request"
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -89,8 +98,6 @@ jobs:
             echo "PORT is NOT set"
             exit 1
           fi
-      - name: Intentional Failure
-        run: exit 1
       - name: Success Test
         if: success()
         run: echo "Backend job is successful"

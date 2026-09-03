@@ -41,12 +41,6 @@ jobs:
 
   backend:
     runs-on: ubuntu-latest
-    environment: dev
-
-    env:
-      JWT_SECRET: ${{ secrets.JWT_SECRET }}
-      JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
-      PORT: ${{ vars.PORT }}
 
     steps:
       - name: Checkout code
@@ -77,29 +71,6 @@ jobs:
           npm run lint
           npm test
 
-      - name: Check environment variables
-        run: |
-          if [ -n "$JWT_SECRET" ]; then
-            echo "JWT_SECRET is set"
-          else
-            echo "JWT_SECRET is NOT set"
-            exit 1
-          fi
-
-          if [ -n "$JWT_EXPIRES_IN" ]; then
-            echo "JWT_EXPIRES_IN is set"
-          else
-            echo "JWT_EXPIRES_IN is NOT set"
-            exit 1
-          fi
-
-          if [ -n "$PORT" ]; then
-            echo "PORT is set"
-          else
-            echo "PORT is NOT set"
-            exit 1
-          fi
-
   deploy:
     needs:
       - frontend
@@ -108,6 +79,8 @@ jobs:
     if: github.event_name == 'push'
 
     runs-on: ubuntu-latest
+
+    environment: dev
 
     steps:
       - name: Download Frontend Build

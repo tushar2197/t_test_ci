@@ -108,16 +108,13 @@ jobs:
 
       - name: Check Server Environment
         run: |
-          ssh "$SERVER_USER@$SERVER_HOST" "
-            echo '--- Server ---'
-            hostname
-
-            echo '--- Node ---'
+          ssh "$SERVER_USER@$SERVER_HOST" '
+           echo "--- Node ---"
             node --version
 
-            echo '--- NPM ---'
+            echo "--- NPM ---"
             npm --version
 
-            echo '--- PM2 ---'
+            echo "--- PM2 ---"
             pm2 --version
-          "
+          '

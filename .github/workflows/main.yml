@@ -38,7 +38,7 @@ jobs:
           name: frontend-build
           path: ./web/.next
           include-hidden-files: true
-    
+
   backend:
     runs-on: ubuntu-latest
     environment: dev
@@ -62,7 +62,6 @@ jobs:
       - name: Pull Request Only
         if: github.event_name == 'pull_request'
         run: echo "This is a Pull Request"
-      
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -100,17 +99,7 @@ jobs:
             echo "PORT is NOT set"
             exit 1
           fi
-      - name: Success Test
-        if: success()
-        run: echo "Backend job is successful"
 
-      - name: Failure Test
-        if: failure()
-        run: echo "Backend job has failed"
-
-      - name: Always Test
-        if: always()
-        run: echo "This step always runs"
   deploy:
     needs:
       - frontend
@@ -121,5 +110,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Download Frontend Build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: ./web/.next
+
+      - name: Show Frontend Build
+        run: ls -la ./web/.next
+
       - name: Deployment Check
         run: echo "Frontend and Backend passed. Ready to deploy."

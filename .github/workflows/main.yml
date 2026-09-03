@@ -87,6 +87,7 @@ jobs:
       SERVER_HOST: ${{ vars.SERVER_HOST }}
       SERVER_USER: ${{ vars.SERVER_USER }}
       APP_NAME: ${{ vars.APP_NAME }}
+      APP_DIR: ${{ vars.APP_DIR }}
 
     steps:
       - name: Download Frontend Build
@@ -124,3 +125,12 @@ jobs:
             echo "--- PM2 ---"
             pm2 --version
           '
+      - name: Prepare Deployment Directory
+        run: |
+          ssh "$SERVER_USER@$SERVER_HOST" "
+            mkdir -p '$APP_DIR/back'
+            mkdir -p '$APP_DIR/web'
+
+            echo 'Deployment directory prepared'
+            ls -la '$APP_DIR'
+          "

@@ -109,12 +109,24 @@ jobs:
       - name: Check Server Environment
         run: |
           ssh "$SERVER_USER@$SERVER_HOST" '
-           echo "--- Node ---"
-            node --version
+            echo "--- User ---"
+            whoami
+
+            echo "--- Home ---"
+            echo "$HOME"
+
+            echo "--- NVM directory ---"
+            ls -la "$HOME/.nvm" 2>/dev/null || echo "NVM not found at $HOME/.nvm"
+
+            echo "--- NVM command ---"
+            command -v nvm || true
+
+            echo "--- Node ---"
+            command -v node || true
 
             echo "--- NPM ---"
-            npm --version
+            command -v npm || true
 
             echo "--- PM2 ---"
-            pm2 --version
+            command -v pm2 || true
           '

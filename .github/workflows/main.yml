@@ -109,24 +109,18 @@ jobs:
       - name: Check Server Environment
         run: |
           ssh "$SERVER_USER@$SERVER_HOST" '
-            echo "--- User ---"
-            whoami
+            export NVM_DIR="/home/ubuntu/.nvm"
+            source "$NVM_DIR/nvm.sh"
 
-            echo "--- Home ---"
-            echo "$HOME"
-
-            echo "--- NVM directory ---"
-            ls -la "$HOME/.nvm" 2>/dev/null || echo "NVM not found at $HOME/.nvm"
-
-            echo "--- NVM command ---"
-            command -v nvm || true
+            echo "--- NVM ---"
+            nvm --version
 
             echo "--- Node ---"
-            command -v node || true
+            node --version
 
             echo "--- NPM ---"
-            command -v npm || true
+            npm --version
 
             echo "--- PM2 ---"
-            command -v pm2 || true
+            pm2 --version
           '

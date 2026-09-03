@@ -89,6 +89,8 @@ jobs:
             echo "PORT is NOT set"
             exit 1
           fi
+      - name: Intentional Failure
+        run: exit 1
       - name: Success Test
         if: success()
         run: echo "Backend job is successful"

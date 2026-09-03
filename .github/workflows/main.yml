@@ -49,6 +49,9 @@ jobs:
       PORT: ${{ vars.PORT }}
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Check Event Type
         run: echo "Event is ${{ github.event_name }}"
 
@@ -59,8 +62,7 @@ jobs:
       - name: Pull Request Only
         if: github.event_name == 'pull_request'
         run: echo "This is a Pull Request"
-      - name: Checkout code
-        uses: actions/checkout@v4
+      
 
       - name: Set up Node.js
         uses: actions/setup-node@v4

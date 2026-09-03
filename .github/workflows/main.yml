@@ -89,3 +89,14 @@ jobs:
             echo "PORT is NOT set"
             exit 1
           fi
+      - name: Success Test
+        if: success()
+        run: echo "Backend job is successful"
+
+      - name: Failure Test
+        if: failure()
+        run: echo "Backend job has failed"
+
+      - name: Always Test
+        if: always()
+        run: echo "This step always runs"

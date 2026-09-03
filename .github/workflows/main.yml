@@ -109,3 +109,15 @@ jobs:
       - name: Always Test
         if: always()
         run: echo "This step always runs"
+  deploy:
+    needs:
+      - frontend
+      - backend
+
+    if: github.event_name == 'push'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deployment Check
+        run: echo "Frontend and Backend passed. Ready to deploy."

@@ -41,6 +41,13 @@ jobs:
 
   backend:
     runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      JWT_SECRET : ${{ vars.JWT_SECRET }}
+      PORT: 3000
+      JWT_EXPIRES_IN: ${{ vars.JWT_EXPIRES_IN }}
+
+
 
     steps:
       - name: Checkout code
